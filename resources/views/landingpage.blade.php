@@ -14,9 +14,7 @@
           rel="stylesheet">
 
     @vite([
-    'resources/css/app.css',
-    'resources/css/landingpage.css',
-    'resources/js/app.js'
+    'resources/css/landingpage.css'
     ])
 </head>
 <body>
@@ -28,6 +26,8 @@
         <button class="navbar-toggler" type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarMenu"
+                aria-controls="navbarMenu"
+                aria-expanded="false"
                 aria-label="Buka navigasi">
             <span class="navbar-toggler-icon"></span>
         </button>
