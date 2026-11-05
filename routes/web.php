@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingPageController::class, 'index']);
@@ -29,4 +30,10 @@ Route::get('/mahasiswa/cari-proyek', function () {
     
     $user = session('user');
     return view('mahasiswa.cari-proyek', compact('user'));
+});
+
+Route::prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {
+    Route::get('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/verifikasi-proyek', 'verifikasiProyek')->name('verifikasi-proyek');
+    Route::get('/kategori-skill', 'kategoriSkill')->name('kategori-skill');
 });
