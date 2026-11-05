@@ -21,3 +21,12 @@ Route::get('/mahasiswa/dashboard', function () {
     $user = session('user');
     return view('mahasiswa.dashboard', compact('user'));
 });
+
+Route::get('/mahasiswa/cari-proyek', function () {
+    if (!session()->has('user')) {
+        return redirect('/login')->withErrors(['email' => 'Silakan login terlebih dahulu.']);
+    }
+    
+    $user = session('user');
+    return view('mahasiswa.cari-proyek', compact('user'));
+});

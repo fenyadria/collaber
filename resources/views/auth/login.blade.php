@@ -29,7 +29,6 @@
                     Masuk untuk melanjutkan proyek, lamaran, dan tim kamu.
                 </p>
 
-                <!-- Panduan Akun Dummy Sesuai AuthController Kamu -->
                 <div class="mt-8 p-4 bg-slate-800/60 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-2">
                     <p class="font-semibold text-white">💡 Kredensial Uji Coba:</p>
                     <div class="space-y-1">
