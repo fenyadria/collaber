@@ -20,6 +20,8 @@ Route::prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/cari-proyek', 'cariProyek')->name('cari-proyek');
     Route::get('/lamaran-saya', 'lamaranSaya')->name('lamaran-saya');
+    Route::get('/tim-saya', 'timSaya')->name('tim-saya');
+    Route::get('/profil-skill', 'profilSkill')->name('profil-skill');
 });
 
 Route::prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {
