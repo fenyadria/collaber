@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProjectOwnerController;
 use Illuminate\Support\Facades\Route;
@@ -15,22 +16,10 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::get('/mahasiswa/dashboard', function () {
-    if (!session()->has('user')) {
-        return redirect('/login')->withErrors(['email' => 'Silakan login terlebih dahulu.']);
-    }
-    
-    $user = session('user');
-    return view('mahasiswa.dashboard', compact('user'));
-});
-
-Route::get('/mahasiswa/cari-proyek', function () {
-    if (!session()->has('user')) {
-        return redirect('/login')->withErrors(['email' => 'Silakan login terlebih dahulu.']);
-    }
-    
-    $user = session('user');
-    return view('mahasiswa.cari-proyek', compact('user'));
+Route::prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::class)->group(function(){
+    Route::get('/dashboard', 'dashboard')->name('dashboard');
+    Route::get('/cari-proyek', 'cariProyek')->name('cari-proyek');
+    Route::get('/lamaran-saya', 'lamaranSaya')->name('lamaran-saya');
 });
 
 Route::prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {

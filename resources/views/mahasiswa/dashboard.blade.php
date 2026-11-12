@@ -30,13 +30,13 @@
                     <a href="{{ url('/mahasiswa/cari-proyek') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
                         <span>Cari Proyek</span>
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
+                    <a href="{{ url('/mahasiswa/lamaran-saya') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
                         <span>Lamaran Saya</span>
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
+                    <a href="{{ url('/mahasiswa/tim-saya') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
                         <span>Tim Saya</span>
                     </a>
-                    <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
+                    <a href="{{ url('/mahasiswa/profil-skill') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-300 hover:bg-slate-800/50 hover:text-white font-medium text-sm transition">
                         <span>Profil dan Skill</span>
                     </a>
                 </nav>
