@@ -2,82 +2,99 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    private $users = [
-        [
-            'name' => 'Admin Collaber',
-            'email' => 'admin@collaber.test',
-            'password' => 'admin123',
-            'role' => 'admin',
-        ],
-        [
-            'name' => 'Project Owner',
-            'email' => 'owner@collaber.test',
-            'password' => 'owner123',
-            'role' => 'project_owner',
-        ],
-        [
-            'name' => 'Mahasiswa',
-            'email' => 'mahasiswa@collaber.test',
-            'password' => 'mahasiswa123',
-            'role' => 'mahasiswa',
-        ],
-    ];
-
-    public function showRegister()
+    public function showRegister(): View
     {
         return view('auth.register');
     }
 
-    public function showLogin()
+    public function register(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['required', 'string', Rule::in(['mahasiswa', 'project_owner'])],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = DB::transaction(function () use ($validated) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
+                'status' => 'active',
+                'password' => $validated['password'],
+            ]);
+
+            if ($user->role === 'mahasiswa') {
+                $user->profile()->create([]);
+            }
+
+            return $user;
+        });
+
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return match ($user->role) {
+            'project_owner' => redirect()->route('project-owner.dashboard'),
+            default => redirect()->route('mahasiswa.dashboard'),
+        };
+    }
+
+    public function showLogin(): View
     {
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    public function login(Request $request): RedirectResponse
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
         ]);
 
-        $user = collect($this->users)->first(function ($user) use ($request) {
-            return $user['email'] === $request->email
-                && $user['password'] === $request->password;
-        });
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            if (Auth::user()->status !== 'active') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
 
-        if (!$user) {
-            return back()->withErrors([
-                'email' => 'Email atau password salah.',
-            ])->withInput($request->only('email'));
+                return back()->withErrors([
+                    'email' => 'Akun kamu sedang tidak aktif.',
+                ])->withInput($request->only('email'));
+            }
+
+            $request->session()->regenerate();
+
+            return match (Auth::user()->role) {
+                'admin' => redirect()->route('admin.dashboard'),
+                'project_owner' => redirect()->route('project-owner.dashboard'),
+                default => redirect()->route('mahasiswa.dashboard'),
+            };
         }
 
-        session([
-            'user' => [
-                'name' => $user['name'],
-                'email' => $user['email'],
-                'role' => $user['role'],
-            ],
-        ]);
-
-        if ($user['role'] === 'admin') {
-            return redirect('/admin/dashboard');
-        }
-
-        if ($user['role'] === 'project_owner') {
-            return redirect('/project-owner/dashboard');
-        }
-
-        return redirect('/mahasiswa/dashboard');
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
+        ])->withInput($request->only('email'));
     }
 
-    public function logout()
+    public function logout(Request $request): RedirectResponse
     {
-        session()->forget('user');
+        Auth::logout();
 
-        return redirect('/login');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()->route('login');
     }
 }

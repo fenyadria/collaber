@@ -16,7 +16,7 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::class)->group(function(){
+Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::class)->group(function(){
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/cari-proyek', 'cariProyek')->name('cari-proyek');
     Route::get('/lamaran-saya', 'lamaranSaya')->name('lamaran-saya');
@@ -24,13 +24,13 @@ Route::prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::
     Route::get('/profil-skill', 'profilSkill')->name('profil-skill');
 });
 
-Route::prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/verifikasi-proyek', 'verifikasiProyek')->name('verifikasi-proyek');
     Route::get('/kategori-skill', 'kategoriSkill')->name('kategori-skill');
 });
 
-Route::prefix('project-owner')->name('project-owner.')->controller(ProjectOwnerController::class)->group(function () {
+Route::middleware(['auth', 'role:project_owner'])->prefix('project-owner')->name('project-owner.')->controller(ProjectOwnerController::class)->group(function () {
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/proyek-saya', 'proyekSaya')->name('proyek-saya');
     Route::get('/posting-proyek', 'postingProyek')->name('posting-proyek');

@@ -28,15 +28,6 @@
                 <p class="text-slate-300 text-base leading-relaxed">
                     Masuk untuk melanjutkan proyek, lamaran, dan tim kamu.
                 </p>
-
-                <div class="mt-8 p-4 bg-slate-800/60 rounded-xl border border-slate-700 text-xs text-slate-300 space-y-2">
-                    <p class="font-semibold text-white">💡 Kredensial Uji Coba:</p>
-                    <div class="space-y-1">
-                        <p>• Admin: <code class="text-blue-300">admin@collaber.test</code> / <code class="text-yellow-300">admin123</code></p>
-                        <p>• Owner: <code class="text-blue-300">owner@collaber.test</code> / <code class="text-yellow-300">owner123</code></p>
-                        <p>• Mahasiswa: <code class="text-blue-300">mahasiswa@collaber.test</code> / <code class="text-yellow-300">mahasiswa123</code></p>
-                    </div>
-                </div>
             </div>
 
             <div>

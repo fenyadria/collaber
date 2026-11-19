@@ -2,28 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class MahasiswaController extends Controller
 {
-    public function dashboard(): View|RedirectResponse
+    public function dashboard(): View
     {
-        if ($redirect = $this->redirectIfNotMahasiswa()) {
-            return $redirect;
-        }
-
-        $user = session('user');
+        $user = Auth::user()->load('profile');
         return view('mahasiswa.dashboard', compact('user'));
     }
 
-    public function cariProyek(): View|RedirectResponse
+    public function cariProyek(): View
     {
-        if ($redirect = $this->redirectIfNotMahasiswa()) {
-            return $redirect;
-        }
-
-        $user = session('user');
+        $user = Auth::user()->load('profile');
         return view('mahasiswa.cari-proyek', [
             'user' => $user,
             'projects' => [
@@ -34,13 +26,9 @@ class MahasiswaController extends Controller
         ]);
     }
 
-    public function lamaranSaya(): View|RedirectResponse
+    public function lamaranSaya(): View
     {
-        if ($redirect = $this->redirectIfNotMahasiswa()) {
-            return $redirect;
-        }
-
-        $user = session('user');
+        $user = Auth::user()->load('profile');
         return view('mahasiswa.lamaran-saya', [
             'user' => $user,
             'applications' => [
@@ -51,34 +39,15 @@ class MahasiswaController extends Controller
         ]);
     }
 
-    public function timSaya(): View|RedirectResponse
+    public function timSaya(): View
     {
-        if ($redirect = $this->redirectIfNotMahasiswa()) {
-            return $redirect;
-        }
-
-        $user = session('user');
+        $user = Auth::user()->load('profile');
         return view('mahasiswa.tim-saya', compact('user'));
     }
 
-    public function profilSkill(): View|RedirectResponse
+    public function profilSkill(): View
     {
-        if ($redirect = $this->redirectIfNotMahasiswa()) {
-            return $redirect;
-        }
-
-        $user = session('user');
+        $user = Auth::user()->load('profile');
         return view('mahasiswa.profil-skill', compact('user'));
-    }
-
-    private function redirectIfNotMahasiswa(): ?RedirectResponse
-    {
-        if (!session()->has('user')) {
-            return redirect('/login')->withErrors([
-                'email' => 'Silakan login terlebih dahulu.',
-            ]);
-        }
-
-        return null;
     }
 }

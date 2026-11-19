@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class ProjectOwnerController extends Controller
@@ -12,13 +13,10 @@ class ProjectOwnerController extends Controller
 
     private const CATEGORIES = ['Aplikasi Web', 'Penelitian', 'Desain', 'Multimedia'];
 
-    public function dashboard(): View|RedirectResponse
+    public function dashboard(): View
     {
-        if ($redirect = $this->redirectIfNotOwner()) {
-            return $redirect;
-        }
-
         return view('project-owner.dashboard', [
+            'user' => Auth::user(),
             'statistics' => [
                 ['label' => 'Total proyek', 'value' => '5'],
                 ['label' => 'Lamaran masuk', 'value' => '12'],
@@ -33,12 +31,8 @@ class ProjectOwnerController extends Controller
         ]);
     }
 
-    public function proyekSaya(Request $request): View|RedirectResponse
+    public function proyekSaya(Request $request): View
     {
-        if ($redirect = $this->redirectIfNotOwner()) {
-            return $redirect;
-        }
-
         $filter = in_array($request->query('status'), self::STATUSES, true)
             ? $request->query('status')
             : null;
@@ -49,19 +43,17 @@ class ProjectOwnerController extends Controller
             ->all();
 
         return view('project-owner.proyek-saya', [
+            'user' => Auth::user(),
             'projects' => $projects,
             'filter' => $filter,
             'statuses' => self::STATUSES,
         ]);
     }
 
-    public function postingProyek(): View|RedirectResponse
+    public function postingProyek(): View
     {
-        if ($redirect = $this->redirectIfNotOwner()) {
-            return $redirect;
-        }
-
         return view('project-owner.posting-proyek', [
+            'user' => Auth::user(),
             'categories' => self::CATEGORIES,
             'skills' => ['Laravel', 'MySQL', 'Figma'],
         ]);
@@ -69,10 +61,6 @@ class ProjectOwnerController extends Controller
 
     public function simpanProyek(Request $request): RedirectResponse
     {
-        if ($redirect = $this->redirectIfNotOwner()) {
-            return $redirect;
-        }
-
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -91,8 +79,7 @@ class ProjectOwnerController extends Controller
             'deadline.after' => 'Tenggat harus setelah hari ini.',
         ]);
 
-        // TODO: simpan ke tabel projects. Saat ini login masih memakai akun hardcode,
-        // belum ada baris user di database untuk dijadikan owner_id.
+        // TODO: simpan ke tabel projects menggunakan Auth::id() sebagai owner_id.
         $message = $request->input('action') === 'submit'
             ? 'Proyek dikirim untuk verifikasi (status: pending).'
             : 'Draf proyek disimpan.';
@@ -128,16 +115,5 @@ class ProjectOwnerController extends Controller
                 'reason' => '[Catatan dari Admin]. Revisi proyek lalu kirim ulang untuk verifikasi.',
             ],
         ];
-    }
-
-    private function redirectIfNotOwner(): ?RedirectResponse
-    {
-        if (session('user.role') !== 'project_owner') {
-            return redirect('/login')->withErrors([
-                'email' => 'Silakan login sebagai Project Owner terlebih dahulu.',
-            ]);
-        }
-
-        return null;
     }
 }
