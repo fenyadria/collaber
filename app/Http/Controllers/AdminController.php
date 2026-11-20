@@ -2,18 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class AdminController extends Controller
 {
-    public function dashboard(): View|RedirectResponse
+    public function dashboard(): View
     {
-        if ($redirect = $this->redirectIfNotAdmin()) {
-            return $redirect;
-        }
-
         return view('admin.dashboard', [
+            'user' => Auth::user(),
             'statistics' => [
                 ['label' => 'Total pengguna', 'value' => '1.284'],
                 ['label' => 'Proyek pending', 'value' => '3'],
@@ -33,13 +30,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function verifikasiProyek(): View|RedirectResponse
+    public function verifikasiProyek(): View
     {
-        if ($redirect = $this->redirectIfNotAdmin()) {
-            return $redirect;
-        }
-
         return view('admin.verifikasi-proyek', [
+            'user' => Auth::user(),
             'projects' => [
                 ['name' => 'Sistem Informasi Perpustakaan', 'owner' => 'Dina Putri', 'category' => 'Aplikasi Web'],
                 ['name' => 'Survei Pola Belajar Mahasiswa', 'owner' => 'Rafi Nugraha', 'category' => 'Penelitian'],
@@ -48,26 +42,12 @@ class AdminController extends Controller
         ]);
     }
 
-    public function kategoriSkill(): View|RedirectResponse
+    public function kategoriSkill(): View
     {
-        if ($redirect = $this->redirectIfNotAdmin()) {
-            return $redirect;
-        }
-
         return view('admin.kategori-skill', [
+            'user' => Auth::user(),
             'categories' => ['Aplikasi Web', 'Penelitian', 'Desain'],
             'skills' => ['Laravel', 'Figma', 'Statistik'],
         ]);
-    }
-
-    private function redirectIfNotAdmin(): ?RedirectResponse
-    {
-        if (session('user.role') !== 'admin') {
-            return redirect('/login')->withErrors([
-                'email' => 'Silakan login sebagai Admin terlebih dahulu.',
-            ]);
-        }
-
-        return null;
     }
 }
