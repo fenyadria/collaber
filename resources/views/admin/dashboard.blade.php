@@ -30,10 +30,13 @@
             <ul class="divide-y divide-slate-100">
                 @foreach ($pendingProjects as $project)
                     <li class="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
-                        <span class="text-sm font-medium text-slate-800">{{ $project['name'] }}</span>
-                        <span class="text-xs text-slate-500">Owner: {{ $project['owner'] }}</span>
+                    <span class="text-sm font-medium text-slate-800">{{ $project->name }}</span>
+                    <span class="text-xs text-slate-500">Owner: {{ $project->owner_name }}</span>
                     </li>
                 @endforeach
+                @if ($pendingProjects->isEmpty())
+                    <li class="py-3 text-sm text-slate-500">Tidak ada proyek yang menunggu verifikasi.</li>
+                @endif
             </ul>
         </section>
 
@@ -43,15 +46,18 @@
                     <h2 class="font-semibold text-slate-900">Laporan terbaru</h2>
                     <p class="mt-1 text-sm text-slate-500">Laporan yang baru dikirim.</p>
                 </div>
-                <span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">{{ count($latestReports) }} baru</span>
+                <a href="{{ route('admin.laporan') }}" class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100">{{ $statistics[2]['value'] }} baru</a>
             </div>
             <ul class="divide-y divide-slate-100">
                 @foreach ($latestReports as $report)
                     <li class="py-3">
-                        <p class="text-sm font-medium text-slate-800">{{ $report['title'] }}</p>
-                        <p class="mt-1 text-xs text-slate-500">{{ $report['project'] }}</p>
+                        <p class="text-sm font-medium text-slate-800">{{ $report->content }}</p>
+                        <p class="mt-1 text-xs text-slate-500">Pelapor: {{ $report->reporter_name }}</p>
                     </li>
                 @endforeach
+                @if ($latestReports->isEmpty())
+                    <li class="py-3 text-sm text-slate-500">Belum ada laporan.</li>
+                @endif
             </ul>
         </section>
     </div>
