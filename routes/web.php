@@ -19,6 +19,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasiswa.')->controller(MahasiswaController::class)->group(function(){
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/cari-proyek', 'cariProyek')->name('cari-proyek');
+    Route::post('/cari-proyek/{project}/apply', 'applyProyek')->name('cari-proyek.apply');
     Route::get('/lamaran-saya', 'lamaranSaya')->name('lamaran-saya');
     Route::get('/tim-saya', 'timSaya')->name('tim-saya');
     Route::get('/profil-skill', 'profilSkill')->name('profil-skill');
