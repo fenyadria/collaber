@@ -22,6 +22,11 @@ Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasi
     Route::get('/lamaran-saya', 'lamaranSaya')->name('lamaran-saya');
     Route::get('/tim-saya', 'timSaya')->name('tim-saya');
     Route::get('/profil-skill', 'profilSkill')->name('profil-skill');
+    Route::put('/profil-skill', 'updateProfil')->name('profil-skill.update');
+
+    Route::post('/profil-skill/skills', 'storeSkill')->name('profil-skill.skills.store');
+    Route::patch('/profil-skill/skills/{skill}', 'updateSkill')->name('profil-skill.skills.update');
+    Route::delete('/profil-skill/skills/{skill}', 'detachSkill')->name('profil-skill.skills.destroy');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {

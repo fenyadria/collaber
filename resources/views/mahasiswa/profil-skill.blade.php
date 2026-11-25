@@ -14,103 +14,134 @@
             <button type="button" onclick="toggleEditMode(false)" class="py-2 px-4 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-xl text-xs transition">
                 Batal
             </button>
-            <button type="button" onclick="toggleEditMode(false)" class="py-2 px-4 btn-indigo-custom text-white font-medium rounded-xl text-xs transition shadow-sm">
+            <button type="submit" form="profile-form" class="py-2 px-4 btn-indigo-custom text-white font-medium rounded-xl text-xs transition shadow-sm">
                 Simpan perubahan
             </button>
         </div>
     </div>
 
+    @if (session('success'))
+        <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if ($errors->any())
+        <div class="mb-6 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+            <ul class="list-disc list-inside space-y-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:col-span-7">
+        <form id="profile-form" action="{{ route('mahasiswa.profil-skill.update') }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:col-span-7">
+            @csrf
+            @method('PUT')
+
             <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                <div class="w-14 h-14 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-lg shrink-0">
-                    {{ strtoupper(substr($user->name ?? 'NM', 0, 2)) }}
+                @if ($user->profile?->avatar)
+                    <img src="{{ asset('storage/' . $user->profile->avatar) }}" alt="Foto {{ $user->name }}" class="w-14 h-14 rounded-full object-cover shrink-0 border border-slate-200">
+                @else
+                    <div class="w-14 h-14 rounded-full bg-indigo-50 text-indigo-700 font-bold flex items-center justify-center text-lg shrink-0">
+                        {{ strtoupper(substr($user->name ?? 'NM', 0, 2)) }}
+                    </div>
+                @endif
+
+                <div class="flex-1 min-w-0">
+                    <h3 class="text-base font-bold text-slate-900 view-mode">{{ $user->name ?? '[Nama Mahasiswa]' }}</h3>
+                    <input type="text" name="name" value="{{ old('name', $user->name) }}" required class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-slate-900 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode mb-1">
+                    <p class="text-xs text-slate-400 truncate">{{ $user->email ?? '[email]' }}</p>
                 </div>
-                <div class="flex-1">
-                    <h3 class="text-base font-bold text-slate-900">{{ $user->name ?? '[Nama Mahasiswa]' }}</h3>
-                    <p class="text-xs text-slate-400">{{ $user->email ?? '[email]' }}</p>
-                </div>
+
                 <div id="avatar-action" class="hidden">
-                    <button type="button" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-lg text-xs transition">
+                    <label class="cursor-pointer px-3 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-lg text-xs transition inline-block">
                         Ganti foto
-                    </button>
+                        <input type="file" name="avatar" accept="image/jpg,image/jpeg,image/png,image/webp" class="hidden">
+                    </label>
                 </div>
             </div>
 
             <div class="space-y-4">
                 <div>
                     <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">NIM</span>
-                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->nim ?? '[NIM]' }}</p>
-                    <input type="text" value="{{ $user->profile?->nim ?? '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
+                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->nim ?: '[NIM]' }}</p>
+                    <input type="text" name="nim" value="{{ old('nim', $user->profile?->nim) }}" placeholder="Masukkan NIM" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
                 </div>
 
                 <div>
                     <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">No. HP</span>
-                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->phone ?? '[No. HP]' }}</p>
-                    <input type="text" value="{{ $user->profile?->phone ?? '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
+                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->phone ?: '[No. HP]' }}</p>
+                    <input type="text" name="phone" value="{{ old('phone', $user->profile?->phone) }}" placeholder="Masukkan No. HP" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
                 </div>
 
                 <div>
                     <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Bio</span>
-                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->bio ?? '[Bio singkat mahasiswa]' }}</p>
-                    <input type="text" value="{{ $user->profile?->bio ?? '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
+                    <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->bio ?: '[Bio singkat mahasiswa]' }}</p>
+                    <input type="text" name="bio" value="{{ old('bio', $user->profile?->bio) }}" placeholder="Tulis bio singkat" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
                 </div>
             </div>
-        </div>
+        </form>
 
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:col-span-5">
             <h3 class="text-base font-bold text-slate-900 mb-4">Skill saya</h3>
 
             <div class="divide-y divide-slate-100">
-                <div class="py-3 flex items-center justify-between first:pt-0">
-                    <span class="text-sm font-medium text-slate-800">Figma</span>
-                    <span class="px-3 py-1 bg-slate-100 text-slate-600 font-medium text-xs rounded-full view-mode">Mahir</span>
-                    <div class="hidden edit-mode flex items-center gap-2">
-                        <select class="px-3 py-1.5 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg focus:outline-none">
-                            <option selected>Mahir</option>
-                            <option>Menengah</option>
-                            <option>Pemula</option>
-                        </select>
-                        <button type="button" class="px-3 py-1.5 bg-white border border-slate-300 text-red-600 hover:bg-red-50 font-medium rounded-lg text-xs transition">Hapus</button>
-                    </div>
-                </div>
+                @forelse ($user->skills as $skill)
+                    <div class="py-3 flex items-center justify-between gap-2 first:pt-0">
+                        <span class="text-sm font-medium text-slate-800">{{ $skill->name }}</span>
 
-                <div class="py-3 flex items-center justify-between">
-                    <span class="text-sm font-medium text-slate-800">PHP</span>
-                    <span class="px-3 py-1 bg-slate-100 text-slate-600 font-medium text-xs rounded-full view-mode">Menengah</span>
-                    <div class="hidden edit-mode flex items-center gap-2">
-                        <select class="px-3 py-1.5 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg focus:outline-none">
-                            <option>Mahir</option>
-                            <option selected>Menengah</option>
-                            <option>Pemula</option>
-                        </select>
-                        <button type="button" class="px-3 py-1.5 bg-white border border-slate-300 text-red-600 hover:bg-red-50 font-medium rounded-lg text-xs transition">Hapus</button>
-                    </div>
-                </div>
+                        <span class="px-3 py-1 bg-slate-100 text-slate-600 font-medium text-xs rounded-full view-mode">
+                            {{ $skill->pivot->level }}
+                        </span>
 
-                <div class="py-3 flex items-center justify-between">
-                    <span class="text-sm font-medium text-slate-800">Statistik</span>
-                    <span class="px-3 py-1 bg-slate-100 text-slate-600 font-medium text-xs rounded-full view-mode">Pemula</span>
-                    <div class="hidden edit-mode flex items-center gap-2">
-                        <select class="px-3 py-1.5 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg focus:outline-none">
-                            <option>Mahir</option>
-                            <option>Menengah</option>
-                            <option selected>Pemula</option>
-                        </select>
-                        <button type="button" class="px-3 py-1.5 bg-white border border-slate-300 text-red-600 hover:bg-red-50 font-medium rounded-lg text-xs transition">Hapus</button>
+                        <div class="hidden edit-mode flex items-center gap-2">
+                            <form action="{{ route('mahasiswa.profil-skill.skills.update', $skill) }}" method="POST" class="flex items-center gap-2">
+                                @csrf
+                                @method('PATCH')
+                                <select name="level" onchange="this.form.submit()" class="px-3 py-1.5 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-lg focus:outline-none">
+                                    @foreach (['Mahir', 'Menengah', 'Pemula'] as $levelOption)
+                                        <option value="{{ $levelOption }}" @selected($skill->pivot->level === $levelOption)>
+                                            {{ $levelOption }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </form>
+
+                            <form action="{{ route('mahasiswa.profil-skill.skills.destroy', $skill) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="px-3 py-1.5 bg-white border border-slate-300 text-red-600 hover:bg-red-50 font-medium rounded-lg text-xs transition">
+                                    Hapus
+                                </button>
+                            </form>
+                        </div>
                     </div>
-                </div>
+                @empty
+                    <p class="py-3 text-xs text-slate-400">Belum ada skill yang ditambahkan.</p>
+                @endforelse
             </div>
 
             <div id="add-skill-section" class="mt-4 pt-4 border-t border-slate-100 hidden">
-                <div class="flex items-center gap-2">
-                    <select class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 text-slate-500 text-xs rounded-xl focus:outline-none">
-                        <option>Pilih skill dari daftar</option>
+                <form action="{{ route('mahasiswa.profil-skill.skills.store') }}" method="POST" class="flex items-center gap-2">
+                    @csrf
+                    <select name="skill_id" required class="flex-1 px-3 py-2 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl focus:outline-none">
+                        <option value="">Pilih skill dari daftar</option>
+                        @foreach ($allSkills as $item)
+                            <option value="{{ $item->id }}">{{ $item->name }}</option>
+                        @endforeach
                     </select>
-                    <button type="button" class="py-2 px-4 btn-indigo-custom text-white font-medium rounded-xl text-xs transition shadow-sm">
+                    <select name="level" required class="px-3 py-2 bg-slate-50 border border-slate-300 text-slate-700 text-xs rounded-xl focus:outline-none">
+                        <option value="Pemula">Pemula</option>
+                        <option value="Menengah">Menengah</option>
+                        <option value="Mahir">Mahir</option>
+                    </select>
+                    <button type="submit" class="py-2 px-4 btn-indigo-custom text-white font-medium rounded-xl text-xs transition shadow-sm shrink-0">
                         Tambah
                     </button>
-                </div>
+                </form>
             </div>
         </div>
     </div>
@@ -150,5 +181,9 @@
             editElements.forEach(el => el.classList.add('hidden'));
         }
     }
+
+    @if ($errors->any())
+        document.addEventListener('DOMContentLoaded', () => toggleEditMode(true));
+    @endif
 </script>
 @endpush
