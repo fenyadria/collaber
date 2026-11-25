@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Skill;
+use App\Models\Project;
+use App\Models\Category;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +19,45 @@ class MahasiswaController extends Controller
         return view('mahasiswa.dashboard', compact('user'));
     }
 
-    public function cariProyek(): View
+    public function cariProyek(Request $request): View
     {
-        $user = Auth::user()->load('profile');
+        $user = Auth::user()->load('skills');
+        $userSkillIds = $user->skills->pluck('id');
+
+        $categories = Category::orderBy('name')->get(); 
+        $allSkills = Skill::orderBy('name')->get();
+
+        $projects = Project::query()
+            ->with(['category', 'skills'])
+            ->when($request->filled('search'), function ($q) use ($request) {
+                $search = $request->input('search');
+                $q->where(function ($sub) use ($search) {
+                    $sub->where('name', 'ilike', "%{$search}%")
+                        ->orWhere('description', 'ilike', "%{$search}%")
+                        ->orWhere('goal', 'ilike', "%{$search}%");
+                });
+            })
+            ->when($request->filled('category_id'), function ($q) use ($request) {
+                $q->where('category_id', $request->input('category_id'));
+            })
+            ->when($request->filled('skill_id'), function ($q) use ($request) {
+                $skillId = $request->input('skill_id');
+                $q->whereHas('skills', function ($sub) use ($skillId) {
+                    $sub->where('skills.id', $skillId);
+                });
+            })
+            ->when($request->boolean('available_only'), function ($q) {
+                $q->where('max_members', '>', 0);
+            })
+            ->latest()
+            ->get();
+
         return view('mahasiswa.cari-proyek', [
             'user' => $user,
-            'projects' => [
-                ['name' => 'Redesain Aplikasi Event Kampus', 'quota' => 3, 'skills' => 'Figma, Riset UX.', 'type' => 'Cocok dengan skill-mu'],
-                ['name' => 'Sistem Informasi Perpustakaan', 'quota' => 4, 'skills' => 'PHP, MySQL.', 'type' => 'Cocok dengan skill-mu'],
-                ['name' => 'Survei Pola Belajar Mahasiswa', 'quota' => 5, 'skills' => 'Statistik, Penulisan.', 'type' => 'Penelitian'],
-            ]
+            'projects' => $projects,
+            'categories' => $categories,
+            'allSkills' => $allSkills,
+            'userSkillIds' => $userSkillIds,
         ]);
     }
 
