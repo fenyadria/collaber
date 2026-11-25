@@ -124,13 +124,26 @@
                 </div>
 
                 <div class="mt-6">
-                    <button type="button"
-                        data-title="{{ $project->name }}"
-                        data-action="{{ route('mahasiswa.cari-proyek.apply', $project) }}"
-                        onclick="openModalFromButton(this)"
-                        class="py-2 px-5 btn-indigo-custom text-white font-medium rounded-xl text-sm transition shadow-sm">
-                        Apply
-                    </button>
+                    @if ($hasActiveProject ?? false)
+                        <button type="button" disabled
+                            class="py-2 px-5 bg-slate-200 text-slate-500 font-medium rounded-xl text-sm cursor-not-allowed"
+                            title="Selesaikan proyek aktifmu terlebih dahulu">
+                            Sedang dalam proyek
+                        </button>
+                    @elseif (!($hasCv ?? false))
+                        <a href="{{ route('mahasiswa.profil-skill') }}"
+                            class="inline-block py-2 px-5 bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 font-medium rounded-xl text-sm transition">
+                            Lengkapi CV untuk Apply
+                        </a>
+                    @else
+                        <button type="button"
+                            data-title="{{ $project->name }}"
+                            data-action="{{ route('mahasiswa.cari-proyek.apply', $project) }}"
+                            onclick="openModalFromButton(this)"
+                            class="py-2 px-5 btn-indigo-custom text-white font-medium rounded-xl text-sm transition shadow-sm">
+                            Apply
+                        </button>
+                    @endif
                 </div>
             </div>
         @empty

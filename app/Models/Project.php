@@ -48,6 +48,16 @@ class Project extends Model
 
     public function applications(): HasMany
     {
-        return $this->hasMany(ProjectApplication::class);
+        return $this->hasMany(Application::class);
+    }
+
+    public function tasks(): HasMany
+    {
+        return $this->hasMany(ProjectTask::class, 'project_id');
+    }
+
+    public function teamMembers(): HasMany
+    {
+        return $this->hasMany(TeamMember::class, 'project_id');
     }
 }

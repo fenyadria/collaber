@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Skill;
-use App\Models\Project;
+use App\Models\Application;
 use App\Models\Category;
+use App\Models\Project;
+use App\Models\ProjectTask;
+use App\Models\Skill;
+use App\Models\TeamMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,20 +18,80 @@ class MahasiswaController extends Controller
 {
     public function dashboard(): View
     {
-        $user = Auth::user()->load('profile');
-        return view('mahasiswa.dashboard', compact('user'));
+        $user = Auth::user()->load(['profile', 'skills']);
+        $userSkillIds = $user->skills->pluck('id');
+
+        $applicationCounts = Application::query()
+            ->where('user_id', $user->id)
+            ->selectRaw("
+                COUNT(*) FILTER (WHERE status = 'pending') AS pending_count,
+                COUNT(*) FILTER (WHERE status = 'accepted') AS accepted_count,
+                COUNT(*) FILTER (WHERE status = 'rejected') AS rejected_count
+            ")
+            ->first();
+
+        $activeMembership = TeamMember::query()
+            ->with(['project.tasks.assignees'])
+            ->where('user_id', $user->id)
+            ->whereHas('project', function ($q) {
+                $q->where('status', '!=', 'completed');
+            })
+            ->latest('joined_at')
+            ->first();
+
+        $myTasks = $activeMembership?->project?->tasks ?? collect();
+
+        $assignedTasks = $myTasks->filter(function ($task) use ($user) {
+            return $task->assignees->contains('id', $user->id);
+        });
+
+        $dashboardTasks = ($assignedTasks->isNotEmpty() ? $assignedTasks : $myTasks)
+            ->take(5);
+
+        $hasSkills = $userSkillIds->isNotEmpty();
+
+        $recommendedProjects = Project::query()
+            ->with('skills')
+            ->when($hasSkills, function ($query) use ($userSkillIds) {
+                $query->whereHas('skills', function ($q) use ($userSkillIds) {
+                    $q->whereIn('skills.id', $userSkillIds);
+                });
+            })
+            ->latest()
+            ->take(3)
+            ->get();
+
+        return view('mahasiswa.dashboard', [
+            'user' => $user,
+            'userSkillIds' => $userSkillIds,
+            'hasSkills' => $hasSkills,
+            'pendingCount' => (int) ($applicationCounts->pending_count ?? 0),
+            'acceptedCount' => (int) ($applicationCounts->accepted_count ?? 0),
+            'rejectedCount' => (int) ($applicationCounts->rejected_count ?? 0),
+            'dashboardTasks' => $dashboardTasks,
+            'recommendedProjects' => $recommendedProjects,
+        ]);
     }
 
     public function cariProyek(Request $request): View
     {
-        $user = Auth::user()->load('skills');
+        $user = Auth::user()->load(['skills', 'profile']);
+        $hasCv = filled($user->profile?->cv_path);
         $userSkillIds = $user->skills->pluck('id');
 
-        $categories = Category::orderBy('name')->get(); 
+        $categories = Category::orderBy('name')->get();
         $allSkills = Skill::orderBy('name')->get();
+
+        $hasActiveProject = TeamMember::query()
+            ->where('user_id', $user->id)
+            ->whereHas('project', function ($q) {
+                $q->where('status', '!=', 'completed');
+            })
+            ->exists();
 
         $projects = Project::query()
             ->with(['category', 'skills'])
+            ->withCount('teamMembers')
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->input('search');
                 $q->where(function ($sub) use ($search) {
@@ -47,7 +110,7 @@ class MahasiswaController extends Controller
                 });
             })
             ->when($request->boolean('available_only'), function ($q) {
-                $q->where('max_members', '>', 0);
+                $q->whereRaw('max_members > (SELECT COUNT(*) FROM team_members WHERE team_members.project_id = projects.id)');
             })
             ->latest()
             ->get();
@@ -58,26 +121,127 @@ class MahasiswaController extends Controller
             'categories' => $categories,
             'allSkills' => $allSkills,
             'userSkillIds' => $userSkillIds,
+            'hasActiveProject' => $hasActiveProject,
+            'hasCv' => $hasCv,
         ]);
     }
 
-    public function lamaranSaya(): View
+    public function applyProyek(Request $request, Project $project): RedirectResponse
     {
+        $request->validate([
+            'motivation' => ['required', 'string', 'max:1000'],
+        ]);
+
         $user = Auth::user()->load('profile');
+        $userId = $user->id;
+
+        if (blank($user->profile?->cv_path)) {
+            return back()->with('error', 'Kamu harus mengunggah CV di halaman Profil & Skill terlebih dahulu sebelum melamar proyek.');
+        }
+
+        $hasActiveProject = TeamMember::query()
+            ->where('user_id', $userId)
+            ->whereHas('project', function ($q) {
+                $q->where('status', '!=', 'completed');
+            })
+            ->exists();
+
+        if ($hasActiveProject) {
+            return back()->with('error', 'Kamu masih tergabung dalam proyek aktif. Selesaikan proyekmu terlebih dahulu sebelum melamar proyek lain.');
+        }
+
+        $alreadyApplied = Application::query()
+            ->where('user_id', $userId)
+            ->where('project_id', $project->id)
+            ->exists();
+
+        if ($alreadyApplied) {
+            return back()->with('error', 'Kamu sudah pernah melamar ke proyek ini.');
+        }
+
+        $currentMembersCount = $project->teamMembers()->count();
+        if (($project->max_members ?? 0) <= $currentMembersCount) {
+            return back()->with('error', 'Kuota anggota untuk proyek ini sudah penuh.');
+        }
+
+        Application::create([
+            'project_id' => $project->id,
+            'user_id' => $userId,
+            'message' => $request->input('motivation'),
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Lamaran berhasil dikirim!');
+    }
+
+    public function lamaranSaya(Request $request): View
+    {
+        $status = $request->input('status');
+        $allowedStatuses = ['pending', 'accepted', 'rejected'];
+
+        $applications = Application::query()
+            ->with(['project.owner'])
+            ->where('user_id', Auth::id())
+            ->when(in_array($status, $allowedStatuses, true), function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->latest()
+            ->get();
+
         return view('mahasiswa.lamaran-saya', [
-            'user' => $user,
-            'applications' => [
-                ['project' => 'Aplikasi Kasir UMKM', 'owner' => 'Dina Putri', 'date' => '2026-11-10', 'status' => 'accepted'],
-                ['project' => 'Redesain Aplikasi Event Kampus', 'owner' => 'Rafi Nugraha', 'date' => '2026-11-11', 'status' => 'pending'],
-                ['project' => 'Film Pendek Dokumenter', 'owner' => 'Nadia Putri', 'date' => '2026-11-09', 'status' => 'rejected'],
-            ]
+            'applications' => $applications,
+            'currentStatus' => in_array($status, $allowedStatuses, true) ? $status : null,
         ]);
     }
 
     public function timSaya(): View
     {
-        $user = Auth::user()->load('profile');
-        return view('mahasiswa.tim-saya', compact('user'));
+        $userId = Auth::id();
+
+        $membership = TeamMember::query()
+            ->with([
+                'project.owner',
+                'project.tasks.assignees',
+                'project.teamMembers.user',
+            ])
+            ->where('user_id', $userId)
+            ->orderByRaw("CASE WHEN EXISTS (SELECT 1 FROM projects WHERE projects.id = team_members.project_id AND projects.status != 'completed') THEN 0 ELSE 1 END")
+            ->latest('joined_at')
+            ->first();
+
+        $project = $membership?->project;
+        $tasks = $project?->tasks ?? collect();
+        $teamMembers = $project?->teamMembers ?? collect();
+
+        return view('mahasiswa.tim-saya', [
+            'project' => $project,
+            'teamMembers' => $teamMembers,
+            'todoTasks' => $tasks->where('status', 'todo'),
+            'inProgressTasks' => $tasks->whereIn('status', ['in_progress', 'in progress']),
+            'doneTasks' => $tasks->where('status', 'done'),
+        ]);
+    }
+
+    public function updateTaskStatus(Request $request, ProjectTask $task): RedirectResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'in:todo,in_progress,done'],
+        ]);
+
+        $isMember = TeamMember::query()
+            ->where('project_id', $task->project_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if (! $isMember) {
+            abort(403, 'Kamu bukan anggota tim pada proyek ini.');
+        }
+
+        $task->update([
+            'status' => $validated['status'],
+        ]);
+
+        return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
     public function profilSkill(): View
@@ -88,7 +252,7 @@ class MahasiswaController extends Controller
         return view('mahasiswa.profil-skill', [
             'user' => $user,
             'allSkills' => $allSkills,
-            ]);
+        ]);
     }
 
     public function updateProfil(Request $request): RedirectResponse
@@ -99,9 +263,10 @@ class MahasiswaController extends Controller
             'phone' => ['nullable', 'string', 'max:25'],
             'bio' => ['nullable', 'string', 'max:500'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'cv' => ['nullable', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        $user = Auth::user();
+        $user = Auth::user()->load('profile');
 
         $user->update([
             'name' => $validated['name'],
@@ -114,7 +279,17 @@ class MahasiswaController extends Controller
         ];
 
         if ($request->hasFile('avatar')) {
+            if ($user->profile?->avatar) {
+                Storage::disk('public')->delete($user->profile->avatar);
+            }
             $profileData['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        if ($request->hasFile('cv')) {
+            if ($user->profile?->cv_path) {
+                Storage::disk('public')->delete($user->profile->cv_path);
+            }
+            $profileData['cv_path'] = $request->file('cv')->store('cvs', 'public');
         }
 
         $user->profile()->updateOrCreate(

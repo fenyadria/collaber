@@ -82,6 +82,32 @@
                     <p class="text-sm font-medium text-slate-800 view-mode">{{ $user->profile?->bio ?: '[Bio singkat mahasiswa]' }}</p>
                     <input type="text" name="bio" value="{{ old('bio', $user->profile?->bio) }}" placeholder="Tulis bio singkat" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hidden edit-mode">
                 </div>
+
+                <div>
+                    <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Curriculum Vitae (CV)</span>
+
+                    <div class="view-mode">
+                        @if ($user->profile?->cv_path)
+                            <a href="{{ asset('storage/' . $user->profile->cv_path) }}" target="_blank"
+                                class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline">
+                                Lihat / Unduh CV (PDF)
+                            </a>
+                        @else
+                            <p class="text-sm font-medium text-amber-600">Belum diunggah (wajib untuk melamar proyek)</p>
+                        @endif
+                    </div>
+
+                    <div class="hidden edit-mode">
+                        <input type="file" name="cv" accept="application/pdf"
+                            class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 border border-slate-300 rounded-xl p-1.5">
+                        <p class="text-[11px] text-slate-400 mt-1">
+                            Format PDF, maksimal 5MB.
+                            @if ($user->profile?->cv_path)
+                                Biarkan kosong jika tidak ingin mengganti CV saat ini.
+                            @endif
+                        </p>
+                    </div>
+                </div>
             </div>
         </form>
 
