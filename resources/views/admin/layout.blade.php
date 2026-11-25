@@ -22,8 +22,8 @@
                     <a href="{{ route('admin.dashboard') }}" @class(['admin-active' => request()->routeIs('admin.dashboard'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Dashboard</a>
                     <a href="{{ route('admin.verifikasi-proyek') }}" @class(['admin-active' => request()->routeIs('admin.verifikasi-proyek'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Verifikasi Proyek</a>
                     <a href="{{ route('admin.kategori-skill') }}" @class(['admin-active' => request()->routeIs('admin.kategori-skill'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Kategori dan Skill</a>
-                    <span class="rounded-lg px-3 py-2.5 text-sm text-slate-500" aria-disabled="true">Pengguna</span>
-                    <span class="rounded-lg px-3 py-2.5 text-sm text-slate-500" aria-disabled="true">Laporan</span>
+                    <a href="{{ route('admin.pengguna') }}" @class(['admin-active' => request()->routeIs('admin.pengguna*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Pengguna</a>
+                    <a href="{{ route('admin.laporan') }}" @class(['admin-active' => request()->routeIs('admin.laporan*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Laporan</a>
                 </nav>
             </div>
             <div class="hidden border-t border-slate-700/70 p-4 md:block">

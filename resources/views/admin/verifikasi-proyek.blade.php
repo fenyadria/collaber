@@ -9,6 +9,13 @@
         <p class="mt-1 text-sm text-slate-500">Tinjau proyek yang diajukan sebelum ditampilkan kepada mahasiswa.</p>
     </header>
 
+    @if (session('success'))
+        <p role="status" class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{{ session('success') }}</p>
+    @endif
+    @error('project')
+        <p role="alert" class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">{{ $message }}</p>
+    @enderror
+
     <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <div class="overflow-x-auto">
             <table class="w-full min-w-[760px] text-left text-sm">
@@ -22,48 +29,39 @@
                     </tr>
                 </thead>
                 <tbody id="project-list" class="divide-y divide-slate-100">
-                    @foreach ($projects as $index => $project)
+                    @forelse ($projects as $project)
                         <tr>
-                            <td class="px-5 py-4 font-medium text-slate-800">{{ $project['name'] }}</td>
-                            <td class="px-5 py-4 text-slate-600">{{ $project['owner'] }}</td>
-                            <td class="px-5 py-4 text-slate-600">{{ $project['category'] }}</td>
+                            <td class="px-5 py-4 font-medium text-slate-800">{{ $project->name }}</td>
+                            <td class="px-5 py-4 text-slate-600">{{ $project->owner_name }}</td>
+                            <td class="px-5 py-4 text-slate-600">{{ $project->category_name }}</td>
                             <td class="px-5 py-4">
-                                <span data-status class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">Pending</span>
+                                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700">Pending</span>
                             </td>
                             <td class="px-5 py-4">
                                 <div class="flex items-center gap-2">
-                                    <button type="button" data-decision="Approved" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700">Approve</button>
-                                    <button type="button" data-decision="Rejected" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">Reject</button>
+                                    <form method="POST" action="{{ route('admin.verifikasi-proyek.status', $project->id) }}">
+                                        @csrf
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700">Approve</button>
+                                    </form>
+                                    <form method="POST" action="{{ route('admin.verifikasi-proyek.status', $project->id) }}">
+                                        @csrf
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="rounded-md border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100">Reject</button>
+                                    </form>
                                 </div>
-                                <span class="sr-only" data-announcement role="status" aria-live="polite"></span>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-5 py-10 text-center text-sm text-slate-500">Tidak ada proyek yang menunggu verifikasi.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+        @if ($projects->hasPages())
+            <div class="border-t border-slate-100 px-5 py-4">{{ $projects->links() }}</div>
+        @endif
     </section>
 @endsection
-
-@push('scripts')
-    <script>
-        document.querySelectorAll('#project-list [data-decision]').forEach((button) => {
-            button.addEventListener('click', () => {
-                const row = button.closest('tr');
-                const status = row.querySelector('[data-status]');
-                const decision = button.dataset.decision;
-                const approved = decision === 'Approved';
-
-                status.textContent = approved ? 'Approved' : 'Rejected';
-                status.className = approved
-                    ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700'
-                    : 'rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700';
-                row.querySelector('[data-announcement]').textContent = `Status proyek diubah menjadi ${decision}.`;
-                row.querySelectorAll('[data-decision]').forEach((action) => {
-                    action.disabled = true;
-                    action.classList.add('cursor-not-allowed', 'opacity-50');
-                });
-            });
-        });
-    </script>
-@endpush

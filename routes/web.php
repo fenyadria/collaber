@@ -32,7 +32,16 @@ Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasi
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {
     Route::get('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/verifikasi-proyek', 'verifikasiProyek')->name('verifikasi-proyek');
+    Route::post('/verifikasi-proyek/{project}/status', 'updateProyekStatus')->name('verifikasi-proyek.status');
     Route::get('/kategori-skill', 'kategoriSkill')->name('kategori-skill');
+    Route::post('/kategori-skill/{type}', 'storeCatalog')->name('catalog.store');
+    Route::put('/kategori-skill/{type}/{item}', 'updateCatalog')->name('catalog.update');
+    Route::delete('/kategori-skill/{type}/{item}', 'deleteCatalog')->name('catalog.delete');
+    Route::get('/pengguna', 'pengguna')->name('pengguna');
+    Route::get('/pengguna/{user}', 'detailPengguna')->name('pengguna.show');
+    Route::post('/pengguna/{user}/status', 'updatePenggunaStatus')->name('pengguna.status');
+    Route::get('/laporan', 'laporan')->name('laporan');
+    Route::post('/laporan/{report}/status', 'updateLaporanStatus')->name('laporan.status');
 });
 
 Route::middleware(['auth', 'role:project_owner'])->prefix('project-owner')->name('project-owner.')->controller(ProjectOwnerController::class)->group(function () {
