@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MahasiswaController extends Controller
 {
@@ -244,6 +245,36 @@ class MahasiswaController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
+    public function uploadTaskSubmission(Request $request, ProjectTask $task): RedirectResponse
+    {
+        $validated = $request->validate([
+            'submission' => ['required', 'file', 'mimes:pdf,zip,png,jpg,jpeg,webp,doc,docx', 'max:10240'],
+            'submission_note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $isMember = TeamMember::query()
+            ->where('project_id', $task->project_id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        if (! $isMember) {
+            abort(403, 'Kamu bukan anggota tim pada proyek ini.');
+        }
+
+        if ($task->submission_path) {
+            Storage::disk('public')->delete($task->submission_path);
+        }
+
+        $path = $request->file('submission')->store('task-submissions', 'public');
+
+        $task->update([
+            'submission_path' => $path,
+            'submission_note' => $validated['submission_note'] ?? null,
+        ]);
+
+        return back()->with('success', 'Hasil kerja berhasil diunggah.');
+    }
+
     public function profilSkill(): View
     {
         $user = Auth::user()->load(['profile', 'skills']);
@@ -315,7 +346,8 @@ class MahasiswaController extends Controller
 
         return redirect()
             ->route('mahasiswa.profil-skill')
-            ->with('success', 'Skill berhasil ditambahkan.');
+            ->with('success', 'Skill berhasil ditambahkan.')
+            ->with('keep_editing', true);
     }
 
     public function updateSkill(Request $request, Skill $skill): RedirectResponse
@@ -330,7 +362,8 @@ class MahasiswaController extends Controller
 
         return redirect()
             ->route('mahasiswa.profil-skill')
-            ->with('success', 'Level skill berhasil diperbarui.');
+            ->with('success', 'Level skill berhasil diperbarui.')
+            ->with('keep_editing', true);
     }
 
     public function detachSkill(Skill $skill): RedirectResponse
@@ -339,6 +372,23 @@ class MahasiswaController extends Controller
 
         return redirect()
             ->route('mahasiswa.profil-skill')
-            ->with('success', 'Skill berhasil dihapus dari profil.');
+            ->with('success', 'Skill berhasil dihapus dari profil.')
+            ->with('keep_editing', true);
+    }
+
+    public function lihatCv(): StreamedResponse
+    {
+        $user = Auth::user()->load('profile');
+        $cvPath = $user->profile?->cv_path;
+
+        if (blank($cvPath) || ! Storage::disk('public')->exists($cvPath)) {
+            abort(404, 'File CV tidak ditemukan.');
+        }
+
+        return Storage::disk('public')->response(
+            $cvPath,
+            'CV-' . str($user->name)->slug() . '.pdf',
+            ['Content-Type' => 'application/pdf']
+        );
     }
 }

@@ -88,7 +88,7 @@
 
                     <div class="view-mode">
                         @if ($user->profile?->cv_path)
-                            <a href="{{ asset('storage/' . $user->profile->cv_path) }}" target="_blank"
+                            <a href="{{ route('mahasiswa.profil-skill.cv') }}" target="_blank"
                                 class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-600 hover:underline">
                                 Lihat / Unduh CV (PDF)
                             </a>
@@ -208,7 +208,7 @@
         }
     }
 
-    @if ($errors->any())
+    @if ($errors->any() || session('keep_editing'))
         document.addEventListener('DOMContentLoaded', () => toggleEditMode(true));
     @endif
 </script>

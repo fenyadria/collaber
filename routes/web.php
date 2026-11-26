@@ -26,6 +26,7 @@ Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasi
 
     Route::get('/tim-saya', [MahasiswaController::class, 'timSaya'])->name('tim-saya');
     Route::patch('/tim-saya/tasks/{task}/status', [MahasiswaController::class, 'updateTaskStatus'])->name('tim-saya.tasks.status');
+    Route::post('/tim-saya/tasks/{task}/submission', [MahasiswaController::class, 'uploadTaskSubmission'])->name('tim-saya.tasks.submission');
 
     Route::get('/profil-skill', 'profilSkill')->name('profil-skill');
     Route::put('/profil-skill', 'updateProfil')->name('profil-skill.update');
@@ -33,6 +34,8 @@ Route::middleware(['auth', 'role:mahasiswa'])->prefix('mahasiswa')->name('mahasi
     Route::post('/profil-skill/skills', 'storeSkill')->name('profil-skill.skills.store');
     Route::patch('/profil-skill/skills/{skill}', 'updateSkill')->name('profil-skill.skills.update');
     Route::delete('/profil-skill/skills/{skill}', 'detachSkill')->name('profil-skill.skills.destroy');
+
+    Route::get('/profil-skill/cv', [MahasiswaController::class, 'lihatCv'])->name('profil-skill.cv');
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->controller(AdminController::class)->group(function () {

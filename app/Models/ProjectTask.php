@@ -21,6 +21,8 @@ class ProjectTask extends Model
         'description',
         'status',
         'deadline',
+        'submission_path',
+        'submission_note',
     ];
 
     protected function casts(): array
