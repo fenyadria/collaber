@@ -53,6 +53,7 @@ class MahasiswaController extends Controller
 
         $recommendedProjects = Project::query()
             ->with('skills')
+            ->where('status', 'approved')
             ->when($hasSkills, function ($query) use ($userSkillIds) {
                 $query->whereHas('skills', function ($q) use ($userSkillIds) {
                     $q->whereIn('skills.id', $userSkillIds);
@@ -93,6 +94,7 @@ class MahasiswaController extends Controller
         $projects = Project::query()
             ->with(['category', 'skills'])
             ->withCount('teamMembers')
+            ->where('status', 'approved')
             ->when($request->filled('search'), function ($q) use ($request) {
                 $search = $request->input('search');
                 $q->where(function ($sub) use ($search) {
@@ -135,6 +137,10 @@ class MahasiswaController extends Controller
 
         $user = Auth::user()->load('profile');
         $userId = $user->id;
+
+        if ($project->status !== 'approved') {
+            return back()->with('error', 'Proyek ini belum dibuka untuk pelamar.');
+        }
 
         if (blank($user->profile?->cv_path)) {
             return back()->with('error', 'Kamu harus mengunggah CV di halaman Profil & Skill terlebih dahulu sebelum melamar proyek.');

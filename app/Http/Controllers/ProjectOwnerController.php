@@ -20,7 +20,7 @@ use Illuminate\View\View;
 
 class ProjectOwnerController extends Controller
 {
-    private const STATUSES = ['draft', 'pending', 'approved', 'rejected'];
+    private const STATUSES = ['draft', 'pending', 'approved', 'rejected', 'completed'];
 
     /** Status proyek yang masih boleh diedit oleh owner. */
     private const DEFAULT_CATEGORIES = ['Aplikasi Web', 'Penelitian', 'Desain', 'Multimedia'];
@@ -263,13 +263,13 @@ class ProjectOwnerController extends Controller
 
         $projects = Project::query()
             ->where('owner_id', $ownerId)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'completed'])
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'status']);
 
         if ($project) {
             $this->authorizeOwner($project);
-            abort_unless($project->status === 'approved', 404);
+            abort_unless(in_array($project->status, ['approved', 'completed'], true), 404);
         } else {
             $project = $projects->first();
         }
@@ -299,6 +299,11 @@ class ProjectOwnerController extends Controller
     public function simpanTask(Request $request, Project $project): RedirectResponse
     {
         $this->authorizeOwner($project);
+
+        if ($message = $this->lockedMessage($project)) {
+            return back()->with('error', $message);
+        }
+
         abort_unless($project->status === 'approved', 404);
 
         $memberIds = $project->teamMembers()->pluck('user_id')->all();
@@ -327,10 +332,40 @@ class ProjectOwnerController extends Controller
         return redirect()->route('project-owner.workspace', $project)->with('success', 'Tugas ditambahkan.');
     }
 
+    /**
+     * Owner menandai proyek selesai. Lamaran yang masih pending otomatis ditolak,
+     * dan para anggota bebas melamar proyek lain (status completed tidak dihitung "aktif").
+     */
+    public function selesaiProyek(Project $project): RedirectResponse
+    {
+        $this->authorizeOwner($project);
+
+        if ($project->status !== 'approved') {
+            return back()->with('error', 'Hanya proyek yang sedang berjalan (approved) yang dapat ditandai selesai.');
+        }
+
+        DB::transaction(function () use ($project) {
+            $project->update(['status' => 'completed']);
+
+            $project->applications()
+                ->where('status', 'pending')
+                ->update(['status' => 'rejected', 'responded_at' => now()]);
+        });
+
+        return redirect()->route('project-owner.workspace', $project)
+            ->with('success', 'Proyek ditandai selesai. Kamu dan anggota tim kini bisa saling memberi ulasan.');
+    }
+
     public function updateTask(Request $request, ProjectTask $task): RedirectResponse
     {
         $project = $task->project;
         $this->authorizeOwner($project);
+
+        if ($message = $this->lockedMessage($project)) {
+            return back()->with('error', $message);
+        }
+
+
 
         $memberIds = $project->teamMembers()->pluck('user_id')->all();
 
@@ -360,6 +395,12 @@ class ProjectOwnerController extends Controller
     {
         $this->authorizeOwner($task->project);
 
+        if ($message = $this->lockedMessage($task->project)) {
+            return back()->with('error', $message);
+        }
+
+
+
         $validated = $request->validate([
             'status' => ['required', Rule::in(['todo', 'in_progress', 'done'])],
         ]);
@@ -375,6 +416,12 @@ class ProjectOwnerController extends Controller
     public function uploadTaskSubmission(Request $request, ProjectTask $task): RedirectResponse
     {
         $this->authorizeOwner($task->project);
+
+        if ($message = $this->lockedMessage($task->project)) {
+            return back()->with('error', $message);
+        }
+
+
 
         $validated = $request->validate([
             'submission' => ['required', 'file', 'mimes:pdf,zip,png,jpg,jpeg,webp,doc,docx', 'max:10240'],
@@ -396,6 +443,12 @@ class ProjectOwnerController extends Controller
     public function hapusTask(ProjectTask $task): RedirectResponse
     {
         $this->authorizeOwner($task->project);
+
+        if ($message = $this->lockedMessage($task->project)) {
+            return back()->with('error', $message);
+        }
+
+
 
         $projectId = $task->project_id;
 
@@ -419,6 +472,14 @@ class ProjectOwnerController extends Controller
             ->groupBy('reviewee_id')
             ->get()
             ->keyBy('reviewee_id');
+    }
+
+    /** Pesan jika proyek sudah selesai dan tugasnya dikunci; null jika masih boleh diubah. */
+    private function lockedMessage(Project $project): ?string
+    {
+        return $project->status === 'completed'
+            ? 'Proyek sudah selesai, tugas tidak dapat diubah lagi.'
+            : null;
     }
 
     private function authorizeOwner(Project $project): void

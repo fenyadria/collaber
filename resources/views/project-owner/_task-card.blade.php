@@ -1,4 +1,5 @@
-{{-- Kartu tugas untuk owner. Butuh: $task, $teamMembers --}}
+{{-- Kartu tugas untuk owner. Butuh: $task, $teamMembers. Opsional: $readonly (proyek selesai) --}}
+@php $readonly = $readonly ?? false; @endphp
 <li class="rounded-lg border border-slate-200 bg-slate-50 p-3">
     <p class="text-sm font-semibold text-slate-800">{{ $task->title }}</p>
     @if ($task->description)
@@ -9,6 +10,7 @@
         @if ($task->deadline) &middot; {{ $task->deadline->format('d M Y') }} @endif
     </p>
 
+    @unless ($readonly)
     <form method="POST" action="{{ route('project-owner.workspace.tasks.status', $task) }}" class="mt-2">
         @csrf
         @method('PATCH')
@@ -18,6 +20,7 @@
             <option value="done" @selected($task->status === 'done')>Pindah ke: Selesai</option>
         </select>
     </form>
+    @endunless
 
     <div class="mt-3 border-t border-slate-200 pt-2.5">
         @if ($task->submission_path)
@@ -34,6 +37,7 @@
             <p class="text-xs font-medium text-amber-600">Belum ada hasil diunggah</p>
         @endif
 
+        @unless ($readonly)
         <details class="mt-2">
             <summary class="cursor-pointer select-none text-xs font-medium text-slate-500 hover:text-indigo-600">{{ $task->submission_path ? 'Ganti hasil kerja' : 'Unggah hasil kerja' }}</summary>
             <form method="POST" action="{{ route('project-owner.workspace.tasks.submission', $task) }}" enctype="multipart/form-data" class="mt-2 space-y-1.5">
@@ -43,8 +47,10 @@
                 <button type="submit" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100">Simpan hasil kerja</button>
             </form>
         </details>
+        @endunless
     </div>
 
+    @unless ($readonly)
     <details class="mt-2">
         <summary class="cursor-pointer select-none text-xs font-medium text-slate-500 hover:text-indigo-600">Edit tugas</summary>
         <form method="POST" action="{{ route('project-owner.workspace.tasks.update', $task) }}" class="mt-2 space-y-2">
@@ -70,4 +76,5 @@
         @method('DELETE')
         <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">Hapus</button>
     </form>
+    @endunless
 </li>

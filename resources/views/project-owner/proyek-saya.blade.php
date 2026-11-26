@@ -39,7 +39,9 @@
                         <td class="px-3 py-4">@include('project-owner._status-badge', ['status' => $project->status])</td>
                         <td class="px-3 py-4">
                             <div class="flex flex-wrap gap-2">
-                                @if ($project->status === 'approved')
+                                @if ($project->status === 'completed')
+                                    <a href="{{ route('project-owner.workspace', $project) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Workspace</a>
+                                @elseif ($project->status === 'approved')
                                     <a href="{{ route('project-owner.pelamar', ['project' => $project->id]) }}" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700">Pelamar</a>
                                     <a href="{{ route('project-owner.workspace', $project) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Workspace</a>
                                 @else

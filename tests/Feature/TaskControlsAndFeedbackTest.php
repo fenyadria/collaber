@@ -220,7 +220,7 @@ class TaskControlsAndFeedbackTest extends TestCase
     public function test_owner_sees_ratings_on_workspace_and_applicant_cards(): void
     {
         Review::create(['project_id' => $this->project->id, 'reviewer_id' => $this->owner->id, 'reviewee_id' => $this->member->id, 'rating' => 5]);
-        Review::create(['project_id' => $this->project->id, 'reviewer_id' => User::factory()->create()->id, 'reviewee_id' => $this->member->id, 'rating' => 4]);
+        Review::create(['project_id' => $this->project->id, 'reviewer_id' => User::factory()->create(['role' => 'mahasiswa'])->id, 'reviewee_id' => $this->member->id, 'rating' => 4]);
 
         $this->actingAs($this->owner)->get(route('project-owner.workspace', $this->project))
             ->assertOk()->assertSee('4.5')->assertSee('2 ulasan');

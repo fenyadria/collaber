@@ -68,6 +68,7 @@ Route::middleware(['auth', 'role:project_owner'])->prefix('project-owner')->name
 
     Route::get('/workspace/{project?}', 'workspace')->name('workspace');
     Route::post('/workspace/{project}/tasks', 'simpanTask')->name('workspace.tasks.store');
+    Route::post('/workspace/{project}/selesai', 'selesaiProyek')->name('workspace.complete');
     Route::delete('/workspace/tasks/{task}', 'hapusTask')->name('workspace.tasks.destroy');
     Route::put('/workspace/tasks/{task}', 'updateTask')->name('workspace.tasks.update');
     Route::patch('/workspace/tasks/{task}/status', 'updateTaskStatus')->name('workspace.tasks.status');
