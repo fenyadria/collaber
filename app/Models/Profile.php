@@ -13,6 +13,7 @@ class Profile extends Model
         'phone',
         'bio',
         'avatar',
+        'cv_path',
     ];
 
     public function user(): BelongsTo

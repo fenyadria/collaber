@@ -8,9 +8,7 @@
         <a href="{{ route('project-owner.posting-proyek') }}" class="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">+ Posting proyek baru</a>
     </header>
 
-    @if (session('success'))
-        <div class="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">{{ session('success') }}</div>
-    @endif
+    @include('project-owner._flash')
 
     <nav aria-label="Filter status" class="mb-4 flex flex-wrap gap-2">
         <a href="{{ route('project-owner.proyek-saya') }}" @class(['rounded-full px-3 py-1 text-xs font-semibold', 'bg-indigo-600 text-white' => ! $filter, 'bg-indigo-50 text-indigo-800' => $filter])>Semua</a>
@@ -34,21 +32,21 @@
             <tbody class="divide-y divide-slate-100">
                 @forelse ($projects as $project)
                     <tr>
-                        <td class="px-5 py-4 font-semibold text-slate-900">{{ $project['name'] }}</td>
-                        <td class="px-3 py-4 text-slate-600">{{ $project['category'] }}</td>
-                        <td class="px-3 py-4 text-slate-600">{{ $project['filled'] }} dari {{ $project['quota'] }}</td>
-                        <td class="px-3 py-4 text-slate-600">{{ $project['applicants'] }}</td>
-                        <td class="px-3 py-4">@include('project-owner._status-badge', ['status' => $project['status']])</td>
+                        <td class="px-5 py-4 font-semibold text-slate-900">{{ $project->name }}</td>
+                        <td class="px-3 py-4 text-slate-600">{{ $project->category?->name ?? '-' }}</td>
+                        <td class="px-3 py-4 text-slate-600">{{ $project->team_members_count }} dari {{ $project->max_members }}</td>
+                        <td class="px-3 py-4 text-slate-600">{{ $project->applications_count }}</td>
+                        <td class="px-3 py-4">@include('project-owner._status-badge', ['status' => $project->status])</td>
                         <td class="px-3 py-4">
                             <div class="flex flex-wrap gap-2">
-                                @if ($project['status'] === 'approved')
-                                    <span class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white opacity-60" aria-disabled="true">Pelamar</span>
-                                    <span class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 opacity-60" aria-disabled="true">Workspace</span>
+                                @if ($project->status === 'approved')
+                                    <a href="{{ route('project-owner.pelamar', ['project' => $project->id]) }}" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700">Pelamar</a>
+                                    <a href="{{ route('project-owner.workspace', $project) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Workspace</a>
                                 @else
-                                    <span class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 opacity-60" aria-disabled="true">Edit</span>
+                                    <a href="{{ route('project-owner.proyek.edit', $project) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Edit</a>
                                 @endif
-                                @if ($project['status'] === 'rejected')
-                                    <button type="button" data-reason-toggle="reason-{{ $loop->index }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Lihat alasan</button>
+                                @if ($project->status === 'rejected')
+                                    <button type="button" data-reason-toggle="reason-{{ $project->id }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Lihat alasan</button>
                                 @endif
                             </div>
                         </td>
@@ -61,10 +59,10 @@
     </section>
 
     @foreach ($projects as $project)
-        @if ($project['status'] === 'rejected')
-            <section id="reason-{{ $loop->index }}" class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="font-semibold text-slate-900">Alasan penolakan: {{ $project['name'] }}</h2>
-                <p class="mt-1 text-sm text-slate-500">{{ $project['reason'] }}</p>
+        @if ($project->status === 'rejected')
+            <section id="reason-{{ $project->id }}" class="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 class="font-semibold text-slate-900">Alasan penolakan: {{ $project->name }}</h2>
+                <p class="mt-1 text-sm text-slate-500">Proyek tidak lolos verifikasi admin. Revisi proyek lalu kirim ulang untuk verifikasi.</p>
             </section>
         @endif
     @endforeach

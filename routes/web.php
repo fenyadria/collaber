@@ -55,4 +55,14 @@ Route::middleware(['auth', 'role:project_owner'])->prefix('project-owner')->name
     Route::get('/proyek-saya', 'proyekSaya')->name('proyek-saya');
     Route::get('/posting-proyek', 'postingProyek')->name('posting-proyek');
     Route::post('/posting-proyek', 'simpanProyek')->name('posting-proyek.store');
+    Route::get('/proyek/{project}/edit', 'editProyek')->name('proyek.edit');
+    Route::put('/proyek/{project}', 'updateProyek')->name('proyek.update');
+    Route::delete('/proyek/{project}', 'hapusProyek')->name('proyek.destroy');
+
+    Route::get('/pelamar', 'pelamar')->name('pelamar');
+    Route::post('/pelamar/{application}/status', 'updatePelamarStatus')->name('pelamar.status');
+
+    Route::get('/workspace/{project?}', 'workspace')->name('workspace');
+    Route::post('/workspace/{project}/tasks', 'simpanTask')->name('workspace.tasks.store');
+    Route::delete('/workspace/tasks/{task}', 'hapusTask')->name('workspace.tasks.destroy');
 });

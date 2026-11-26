@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('student_profiles', function (Blueprint $table) {
+        Schema::table('profiles', function (Blueprint $table) {
             $table->string('cv_path')->nullable()->after('avatar');
         });
     }
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('student_profiles', function (Blueprint $table) {
-            //
+        Schema::table('profiles', function (Blueprint $table) {
+            $table->dropColumn('cv_path');
         });
     }
 };

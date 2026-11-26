@@ -20,10 +20,10 @@
                 </div>
                 <nav aria-label="Navigasi Project Owner" class="flex gap-1 overflow-x-auto px-3 pb-3 md:flex-col md:overflow-visible">
                     <a href="{{ route('project-owner.dashboard') }}" @class(['po-active' => request()->routeIs('project-owner.dashboard'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Dashboard</a>
-                    <a href="{{ route('project-owner.proyek-saya') }}" @class(['po-active' => request()->routeIs('project-owner.proyek-saya'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Proyek Saya</a>
+                    <a href="{{ route('project-owner.proyek-saya') }}" @class(['po-active' => request()->routeIs('project-owner.proyek-saya', 'project-owner.proyek.*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Proyek Saya</a>
                     <a href="{{ route('project-owner.posting-proyek') }}" @class(['po-active' => request()->routeIs('project-owner.posting-proyek*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Posting Proyek</a>
-                    <span class="rounded-lg px-3 py-2.5 text-sm text-slate-500" aria-disabled="true">Pelamar</span>
-                    <span class="rounded-lg px-3 py-2.5 text-sm text-slate-500" aria-disabled="true">Workspace</span>
+                    <a href="{{ route('project-owner.pelamar') }}" @class(['po-active' => request()->routeIs('project-owner.pelamar*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Pelamar</a>
+                    <a href="{{ route('project-owner.workspace') }}" @class(['po-active' => request()->routeIs('project-owner.workspace*'), 'rounded-lg px-3 py-2.5 text-sm text-slate-200 transition hover:bg-slate-700/70' => true])>Workspace</a>
                 </nav>
             </div>
             <div class="border-t border-slate-700/70 p-4">
