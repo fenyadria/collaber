@@ -52,11 +52,11 @@
             </div>
 
             <div class="flex items-center gap-3">
-                <button type="button"
+                <button type="button" onclick="document.getElementById('dlg-laporan').showModal()"
                     class="py-2 px-4 bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium rounded-xl text-xs transition">
                     Laporkan
                 </button>
-                <button type="button"
+                <button type="button" onclick="document.getElementById('dlg-ulasan').showModal()"
                     class="py-2 px-4 btn-indigo-custom text-white font-medium rounded-xl text-xs transition shadow-sm">
                     Beri ulasan
                 </button>
@@ -252,5 +252,10 @@
                 @endforeach
             </div>
         </div>
+
+        @include('partials.team-feedback', [
+            'project' => $project,
+            'others' => collect([$project->owner])->merge($teamMembers->pluck('user'))->filter()->reject(fn ($u) => $u->id === Auth::id())->unique('id')->values(),
+        ])
     @endif
 @endsection

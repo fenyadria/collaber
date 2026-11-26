@@ -44,6 +44,7 @@
                     </div>
                     @include('project-owner._status-badge', ['status' => $application->status])
                 </div>
+                <p class="mt-1">@include('project-owner._rating', ['rating' => $ratings[$applicant->id] ?? null])</p>
 
                 @if ($application->message)
                     <p class="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">&ldquo;{{ $application->message }}&rdquo;</p>

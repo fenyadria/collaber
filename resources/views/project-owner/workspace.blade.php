@@ -31,21 +31,7 @@
                                 <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{{ $column['label'] }} ({{ $column['tasks']->count() }})</h3>
                                 <ul class="space-y-2">
                                     @forelse ($column['tasks'] as $task)
-                                        <li class="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                                            <p class="text-sm font-semibold text-slate-800">{{ $task->title }}</p>
-                                            @if ($task->description)
-                                                <p class="mt-1 text-xs text-slate-600">{{ $task->description }}</p>
-                                            @endif
-                                            <p class="mt-2 text-xs text-slate-500">
-                                                {{ $task->assignees->pluck('name')->join(', ') ?: 'Belum ditugaskan' }}
-                                                @if ($task->deadline) &middot; {{ $task->deadline->format('d M Y') }} @endif
-                                            </p>
-                                            <form method="POST" action="{{ route('project-owner.workspace.tasks.destroy', $task) }}" onsubmit="return confirm('Hapus tugas ini?')" class="mt-2">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="text-xs font-semibold text-rose-600 hover:underline">Hapus</button>
-                                            </form>
-                                        </li>
+                                        @include('project-owner._task-card', ['task' => $task, 'teamMembers' => $teamMembers])
                                     @empty
                                         <li class="text-xs text-slate-400">Kosong</li>
                                     @endforelse
@@ -101,13 +87,22 @@
                 <p class="mb-3 text-xs text-slate-500">{{ $teamMembers->count() }} dari {{ $project->max_members }} anggota</p>
                 <ul class="divide-y divide-slate-100">
                     @forelse ($teamMembers as $member)
-                        <li class="py-2 text-sm text-slate-800">{{ $member->user->name }}</li>
+                        <li class="flex flex-wrap items-center justify-between gap-x-2 py-2">
+                            <span class="text-sm text-slate-800">{{ $member->user->name }}</span>
+                            <span>@include('project-owner._rating', ['rating' => $ratings[$member->user_id] ?? null])</span>
+                        </li>
                     @empty
                         <li class="py-2 text-sm text-slate-500">Belum ada anggota.</li>
                     @endforelse
                 </ul>
-                <a href="{{ route('project-owner.pelamar', ['project' => $project->id]) }}" class="mt-4 inline-block rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Lihat pelamar</a>
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <a href="{{ route('project-owner.pelamar', ['project' => $project->id]) }}" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Lihat pelamar</a>
+                    <button type="button" onclick="document.getElementById('dlg-laporan').showModal()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Laporkan</button>
+                    <button type="button" onclick="document.getElementById('dlg-ulasan').showModal()" class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700">Beri ulasan</button>
+                </div>
             </aside>
         </div>
+
+        @include('partials.team-feedback', ['project' => $project, 'others' => $teamMembers->pluck('user')->filter()->values()])
     @endif
 @endsection

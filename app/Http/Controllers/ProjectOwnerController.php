@@ -6,12 +6,15 @@ use App\Models\Application;
 use App\Models\Category;
 use App\Models\Project;
 use App\Models\ProjectTask;
+use App\Models\Review;
 use App\Models\Skill;
 use App\Models\TeamMember;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -190,6 +193,7 @@ class ProjectOwnerController extends Controller
             'projectOptions' => $projectOptions,
             'projectId' => $projectId,
             'status' => $status,
+            'ratings' => $this->ratingsFor($applications->pluck('user_id')),
         ]);
     }
 
@@ -283,6 +287,7 @@ class ProjectOwnerController extends Controller
             'projects' => $projects,
             'project' => $project,
             'teamMembers' => $project?->teamMembers ?? collect(),
+            'ratings' => $this->ratingsFor(($project?->teamMembers ?? collect())->pluck('user_id')),
             'columns' => [
                 'todo' => ['label' => 'To do', 'tasks' => $tasks->where('status', 'todo')],
                 'in_progress' => ['label' => 'Dikerjakan', 'tasks' => $tasks->whereIn('status', ['in_progress', 'in progress'])],
@@ -322,14 +327,98 @@ class ProjectOwnerController extends Controller
         return redirect()->route('project-owner.workspace', $project)->with('success', 'Tugas ditambahkan.');
     }
 
+    public function updateTask(Request $request, ProjectTask $task): RedirectResponse
+    {
+        $project = $task->project;
+        $this->authorizeOwner($project);
+
+        $memberIds = $project->teamMembers()->pluck('user_id')->all();
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'deadline' => ['nullable', 'date'],
+            'assignees' => ['nullable', 'array'],
+            'assignees.*' => ['integer', Rule::in($memberIds)],
+        ], [
+            'title.required' => 'Judul tugas wajib diisi.',
+            'assignees.*.in' => 'Tugas hanya dapat diberikan kepada anggota tim.',
+        ]);
+
+        $task->update([
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'deadline' => $validated['deadline'] ?? null,
+        ]);
+
+        $task->assignees()->sync($validated['assignees'] ?? []);
+
+        return redirect()->route('project-owner.workspace', $project)->with('success', 'Tugas diperbarui.');
+    }
+
+    public function updateTaskStatus(Request $request, ProjectTask $task): RedirectResponse
+    {
+        $this->authorizeOwner($task->project);
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['todo', 'in_progress', 'done'])],
+        ]);
+
+        $task->update(['status' => $validated['status']]);
+
+        return redirect()->route('project-owner.workspace', $task->project_id)->with('success', 'Status tugas diperbarui.');
+    }
+
+    /**
+     * Owner juga ikut mengerjakan: bisa mengunggah atau mengganti hasil kerja sebuah tugas.
+     */
+    public function uploadTaskSubmission(Request $request, ProjectTask $task): RedirectResponse
+    {
+        $this->authorizeOwner($task->project);
+
+        $validated = $request->validate([
+            'submission' => ['required', 'file', 'mimes:pdf,zip,png,jpg,jpeg,webp,doc,docx', 'max:10240'],
+            'submission_note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        if ($task->submission_path) {
+            Storage::disk('public')->delete($task->submission_path);
+        }
+
+        $task->update([
+            'submission_path' => $request->file('submission')->store('task-submissions', 'public'),
+            'submission_note' => $validated['submission_note'] ?? null,
+        ]);
+
+        return redirect()->route('project-owner.workspace', $task->project_id)->with('success', 'Hasil kerja diunggah.');
+    }
+
     public function hapusTask(ProjectTask $task): RedirectResponse
     {
         $this->authorizeOwner($task->project);
 
         $projectId = $task->project_id;
+
+        if ($task->submission_path) {
+            Storage::disk('public')->delete($task->submission_path);
+        }
+
         $task->delete();
 
         return redirect()->route('project-owner.workspace', $projectId)->with('success', 'Tugas dihapus.');
+    }
+
+    /**
+     * Rating rata-rata dan jumlah ulasan per pengguna, dikunci dengan id pengguna.
+     */
+    private function ratingsFor(iterable $userIds): Collection
+    {
+        return Review::query()
+            ->whereIn('reviewee_id', collect($userIds)->unique()->values()->all())
+            ->selectRaw('reviewee_id, AVG(rating) as avg, COUNT(*) as n')
+            ->groupBy('reviewee_id')
+            ->get()
+            ->keyBy('reviewee_id');
     }
 
     private function authorizeOwner(Project $project): void

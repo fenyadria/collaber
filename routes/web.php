@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\MahasiswaController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProjectOwnerController;
+use App\Http\Controllers\TeamFeedbackController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingPageController::class, 'index']);
@@ -68,4 +69,13 @@ Route::middleware(['auth', 'role:project_owner'])->prefix('project-owner')->name
     Route::get('/workspace/{project?}', 'workspace')->name('workspace');
     Route::post('/workspace/{project}/tasks', 'simpanTask')->name('workspace.tasks.store');
     Route::delete('/workspace/tasks/{task}', 'hapusTask')->name('workspace.tasks.destroy');
+    Route::put('/workspace/tasks/{task}', 'updateTask')->name('workspace.tasks.update');
+    Route::patch('/workspace/tasks/{task}/status', 'updateTaskStatus')->name('workspace.tasks.status');
+    Route::post('/workspace/tasks/{task}/submission', 'uploadTaskSubmission')->name('workspace.tasks.submission');
+});
+
+// Laporan dan ulasan: dipakai Mahasiswa dan Project Owner, dicek lewat keanggotaan proyek.
+Route::middleware('auth')->controller(TeamFeedbackController::class)->group(function () {
+    Route::post('/proyek/{project}/laporan', 'storeLaporan')->name('laporan.store');
+    Route::post('/proyek/{project}/ulasan', 'storeUlasan')->name('ulasan.store');
 });
